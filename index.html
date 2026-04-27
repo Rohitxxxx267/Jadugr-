@@ -3,69 +3,39 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Force-Win Live AI</title>
+<title>Force-Win — Live AI</title>
 
 <style>
-body{
-  margin:0;
-  font-family:Arial;
-  background:#071022;
-  color:#fff;
-  padding:20px;
-}
-
-h2{color:#ffd60a}
-
-.card{
-  background:#0b1b2c;
-  padding:15px;
-  border-radius:10px;
-  margin-top:10px;
-  border:1px solid #234;
-}
-
+body{background:#071022;color:#fff;font-family:Arial;padding:18px}
+.card{background:#0b1b2c;padding:12px;border-radius:10px;margin-top:10px}
 .row{display:flex;gap:10px;flex-wrap:wrap}
-
-.box{
-  flex:1;
-  min-width:120px;
-  padding:10px;
-  border-radius:8px;
-  background:#061423;
-  text-align:center;
-}
-
-.big{color:#7ef1a3;font-weight:bold}
-.small{color:#ff7a7a;font-weight:bold}
-.highlight{color:#ffd60a;font-size:20px;font-weight:bold}
-
-table{
-  width:100%;
-  margin-top:15px;
-  border-collapse:collapse;
-}
-
-td,th{
-  border:1px solid #233;
-  padding:6px;
-  text-align:center;
-  font-size:13px;
-}
+.box{flex:1;min-width:120px;background:#061423;padding:10px;border-radius:8px;text-align:center}
+.highlight{color:#ffd60a;font-size:22px;font-weight:bold}
+table{width:100%;margin-top:15px;border-collapse:collapse}
+td,th{border:1px solid #233;padding:6px;text-align:center;font-size:13px}
+.win{color:#7ef1a3}
+.loss{color:#ff7a7a}
 </style>
 </head>
 
 <body>
 
-<h2>🚀 Force-Win Live AI System</h2>
+<h2>🚀 Force-Win AI System (Live)</h2>
 
 <div class="card">
   <div>Current Prediction</div>
   <div class="highlight" id="main">--</div>
 
   <div class="row">
-    <div class="box">Primary <div id="primary"></div></div>
-    <div class="box">Backup <div id="backup"></div></div>
-    <div class="box">Tertiary <div id="tertiary"></div></div>
+    <div class="box">
+      Primary <div id="primary">--</div>
+    </div>
+    <div class="box">
+      Backup <div id="backup">--</div>
+    </div>
+    <div class="box">
+      Tertiary <div id="tertiary">--</div>
+    </div>
   </div>
 </div>
 
@@ -77,6 +47,7 @@ td,th{
         <th>Period</th>
         <th>Primary</th>
         <th>Backup</th>
+        <th>Ter</th>
         <th>Actual</th>
         <th>Result</th>
         <th>Time</th>
@@ -91,32 +62,37 @@ td,th{
 <script>
 const socket = io();
 
-const main = document.getElementById("main");
-const primary = document.getElementById("primary");
-const backup = document.getElementById("backup");
-const tertiary = document.getElementById("tertiary");
-const log = document.getElementById("log");
+// connection test
+socket.on("connect",()=>{
+  console.log("CONNECTED TO BACKEND ✅");
+});
 
+// MAIN UPDATE FROM BACKEND
 socket.on("update",(data)=>{
 
-  main.innerText = data.active || "--";
-  primary.innerText = data.primary || "--";
-  backup.innerText = data.backup || "--";
-  tertiary.innerText = data.tertiary || "--";
+  document.getElementById("main").innerText = data.active || "--";
+  document.getElementById("primary").innerText = data.primary || "--";
+  document.getElementById("backup").innerText = data.backup || "--";
+  document.getElementById("tertiary").innerText = data.tertiary || "--";
 
-  if(data.logs){
-    log.innerHTML = "";
+  let log = document.getElementById("log");
+  log.innerHTML = "";
+
+  if(data.logs && data.logs.length){
 
     data.logs.slice().reverse().forEach(l=>{
       let row = document.createElement("tr");
+
       row.innerHTML = `
         <td>${l.period}</td>
         <td>${l.primary}</td>
         <td>${l.backup}</td>
+        <td>${l.tertiary}</td>
         <td>${l.actual}</td>
-        <td>${l.result}</td>
+        <td class="${l.result==='Win'?'win':'loss'}">${l.result}</td>
         <td>${l.time}</td>
       `;
+
       log.appendChild(row);
     });
   }
