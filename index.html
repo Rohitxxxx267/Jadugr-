@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Force-Win — Ultra Shield</title>
+
+<style>
+:root{--bg:#071022;--fg:#eef;--muted:#9aa;--card:#071a2b;--ylw:#ffd60a;--grn:#7ef1a3;--red:#ff7a7a;--bdr:#234}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:Arial;padding:18px}
+h2{margin-bottom:12px}
+.row{display:flex;gap:12px;flex-wrap:wrap}
+.card{background:var(--card);padding:12px;border-radius:10px;border:2px solid var(--ylw);min-width:260px}
+.highlight{color:var(--ylw);font-weight:700}
+table{width:100%;border-collapse:collapse;margin-top:12px}
+th,td{border:1px solid var(--bdr);padding:6px;text-align:center}
+.win{color:var(--grn)}
+.loss{color:var(--red)}
+</style>
+</head>
+
+<body>
+
+<h2>Force-Win — Ultra Shield</h2>
+
+<div class="row">
+
+  <div class="card">
+    <b>Prediction</b>
+    <div id="predText">—</div>
+
+    <div style="margin-top:8px">
+      <div><b>Primary:</b> <span id="primary">—</span></div>
+      <div><b>Backup:</b> <span id="backup">—</span></div>
+      <div><b>Tertiary:</b> <span id="tertiary">—</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <b>Stats</b>
+    <div id="stats">W:0 L:0</div>
+  </div>
+
+</div>
+
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Primary</th>
+<th>Backup</th>
+<th>Tertiary</th>
+<th>Time</th>
+</tr>
+</thead>
+<tbody id="logBody"></tbody>
+</table>
+
+<script>
+
+let lastPeriod = null;
+let logCount = 0;
+
+// backend से data लेना
+async function getData(){
+  try{
+    const res = await fetch("/data");
+    return await res.json();
+  }catch(e){
+    return null;
+  }
+}
+
+// UI update
+function updateUI(data){
+
+  document.getElementById("primary").innerText = data.primary || "-";
+  document.getElementById("backup").innerText = data.backup || "-";
+  document.getElementById("tertiary").innerText = data.tertiary || "-";
+
+  document.getElementById("predText").innerHTML =
+    `<span class="highlight">${data.primary || "-"}</span>`;
+
+  document.getElementById("stats").innerText =
+    `W:${data.win || 0} L:${data.loss || 0}`;
+
+  // log add
+  const tr = document.createElement("tr");
+  logCount++;
+
+  tr.innerHTML = `
+    <td>${logCount}</td>
+    <td>${data.primary}</td>
+    <td>${data.backup}</td>
+    <td>${data.tertiary}</td>
+    <td>${new Date().toLocaleTimeString()}</td>
+  `;
+
+  const logBody = document.getElementById("logBody");
+  logBody.insertBefore(tr, logBody.firstChild);
+
+  if(logBody.rows.length > 50){
+    logBody.deleteRow(logBody.rows.length - 1);
+  }
+}
+
+// auto loop (no refresh)
+async function tick(){
+  const data = await getData();
+  if(!data) return;
+
+  if(data.period !== lastPeriod){
+    updateUI(data);
+    lastPeriod = data.period;
+  }
+}
+
+// हर 3 sec auto update
+setInterval(tick, 3000);
+tick();
+
+</script>
+
+</body>
+</html>
